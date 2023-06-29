@@ -67,6 +67,7 @@ jobs:
       - name: Archive artifacts
         run: |
           mkdir -p artifacts/${{ matrix.os }}/$platform
+          chmod a+x aria2/aria2c
           strip aria2/aria2c
           cp aria2/aria2c artifacts/${{ matrix.os }}/$platform/
         working-directory: .
