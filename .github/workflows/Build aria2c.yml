@@ -28,8 +28,9 @@ jobs:
           brew install autoconf automake libtool libssh2 c-ares expat sqlite libxml2 zlib gnutls nettle gmp
           brew install --force openssl
           brew link --force openssl
-          export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig:$PKG_CONFIG_PATH"
-
+          export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"
+          export LIBGIT2_SYS_USE_PKG_CONFIG=1
+          
       - name: Build aria2c
         run: |
           git clone https://github.com/aria2/aria2.git
