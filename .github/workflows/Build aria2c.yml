@@ -1,0 +1,42 @@
+name: Build aria2c
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        platform: [x86_64, arm64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          brew install autoconf automake libtool openssl libssh2
+
+      - name: Build aria2c
+        run: |
+          git clone https://github.com/aria2/aria2.git
+          cd aria2
+          autoreconf -i
+          ./configure --enable-static --with-openssl --with-libssh2
+          make
+
+      - name: Archive artifacts
+        run: |
+          mkdir -p artifacts/$platform
+          cp aria2/aria2c artifacts/$platform/
+        working-directory: .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: aria2c
+          path: artifacts
