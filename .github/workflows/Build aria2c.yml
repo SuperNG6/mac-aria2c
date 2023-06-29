@@ -7,32 +7,61 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: [macos-11.0, macos-12.0, macos-13.0, macos-latest]
         platform: [x86_64, arm64]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up macOS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
       - name: Install dependencies
         run: |
           brew install autoconf automake libtool openssl libssh2
+          # Other dependencies if needed
 
       - name: Build aria2c
         run: |
           git clone https://github.com/aria2/aria2.git
           cd aria2
           autoreconf -i
-          ./configure --enable-static --with-openssl --with-libssh2
+          ./configure \
+            --enable-static \
+            --with-openssl \
+            --with-libssh2 \
+            --with-libcares \
+            --with-libexpat \
+            --with-libsqlite3 \
+            --with-libxml2 \
+            --with-zlib \
+            --enable-bittorrent \
+            --enable-metalink \
+            --enable-xml-rpc \
+            --enable-websocket \
+            --enable-websocket-via-libwebsockets \
+            --enable-utf8-only \
+            --enable-largefile \
+            --enable-async-dns \
+            --enable-ftp \
+            --enable-sftp \
+            --enable-http \
+            --enable-segment-allocation \
+            --enable-libaria2 \
+            --disable-nls
           make
 
       - name: Archive artifacts
         run: |
-          mkdir -p artifacts/$platform
-          cp aria2/aria2c artifacts/$platform/
+          mkdir -p artifacts/${{ matrix.os }}/$platform
+          cp aria2/aria2c artifacts/${{ matrix.os }}/$platform/
         working-directory: .
 
       - name: Upload artifacts
