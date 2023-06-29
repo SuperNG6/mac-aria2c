@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install autoconf automake libtool openssl libssh2 libssl
+          brew install autoconf automake libtool openssl libssh2 c-ares expat sqlite libxml2 zlib gnutls nettle gmp
 
       - name: Build aria2c
         run: |
