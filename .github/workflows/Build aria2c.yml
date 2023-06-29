@@ -25,7 +25,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install autoconf automake libtool openssl libssh2 c-ares expat sqlite libxml2 zlib gnutls nettle gmp
+          brew install autoconf automake libtool libssh2 c-ares expat sqlite libxml2 zlib gnutls nettle gmp
+          brew install --force openssl
+          brew link --force openssl
+          export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig:$PKG_CONFIG_PATH"
 
       - name: Build aria2c
         run: |
@@ -34,7 +37,7 @@ jobs:
           autoreconf -i
           ./configure \
             --enable-static \
-            --with-openssl \
+            --with-openssl=/usr/local/opt/openssl \
             --with-libssh2 \
             --with-libcares \
             --with-libexpat \
