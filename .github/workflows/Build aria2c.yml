@@ -55,7 +55,8 @@ jobs:
             --enable-http \
             --enable-segment-allocation \
             --enable-libaria2 \
-            --disable-nls
+            --disable-nls \
+            ARIA2_STATIC=yes
           make
 
       - name: Archive artifacts
