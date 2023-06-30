@@ -15,17 +15,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Clone aria2 source code
-      run: |
-        git clone https://github.com/aria2/aria2.git
-        cd aria2
-        git submodule update --init
 
-    - name: macOS Build
-      if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
+    - name: Install dependencies
       run: |
         brew install cppunit gettext openssl libssh2 c-ares sqlite3 \
         autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
+        
+        
+    - name: Build c-ares
+      run: |
         (cd ..;
         curl -L https://c-ares.haxx.se/download/c-ares-1.17.2.tar.gz -o c-ares.tar.gz;
         tar xf c-ares.tar.gz;
@@ -41,22 +39,42 @@ jobs:
         export CXX=clang++
         sudo rm -fr /usr/local/opt/libxml2/lib/*.dylib /usr/local/opt/libssh2/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib \
         /usr/local/opt/c-ares/lib/*.dylib /usr/local/opt/gettext/lib/*.dylib /usr/local/opt/sqlite/lib/*.dylib /usr/local/opt/zlib/lib/*.dylib /usr/local/opt/libuv/lib/*.dylib || true;
+        
+    - name: Build aria2c
+      run: |     
+        git clone https://github.com/aria2/aria2.git
+        cd aria2
+        autoreconf -i
         ./configure \
-        --prefix=/usr/local \
-        --without-appletls \
-        --without-gnutls \
-        --with-openssl \
-        --with-libuv \
-        --with-libssh2 \
-        --with-sqlite3 \
-        --with-ca-bundle='/usr/local/etc/openssl/cert.pem' \
-        ARIA2_STATIC=yes \
-        --enable-shared=no
+          --enable-static \
+          --with-openssl=/usr/local/opt/openssl \
+          --with-libssh2 \
+          --with-libcares \
+          --with-libexpat \
+          --with-libsqlite3 \
+          --with-libxml2 \
+          --with-zlib \
+          --enable-bittorrent \
+          --enable-metalink \
+          --enable-xml-rpc \
+          --enable-websocket \
+          --enable-websocket-via-libwebsockets \
+          --enable-utf8-only \
+          --enable-largefile \
+          --enable-async-dns \
+          --enable-ftp \
+          --enable-sftp \
+          --enable-http \
+          --enable-segment-allocation \
+          --enable-libaria2 \
+          --disable-nls \
+          --enable-shared=no \
+          ARIA2_STATIC=yes
         make -j`sysctl -n machdep.cpu.thread_count`
         strip src/aria2c
         mkdir ./artifact/
-        mv src/aria2c ./aria2c
-        tar cf ./artifact/aria2c-macos-${{ matrix.arch }}-${{ matrix.os }}.tar aria2c
+        mv src/aria2c ./artifact/aria2c
+
     - name: upload macOS aria2c
       if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
       uses: actions/upload-artifact@master
