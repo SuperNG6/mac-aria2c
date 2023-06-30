@@ -47,7 +47,7 @@ jobs:
           export CXX=arm64-apple-darwin20.2-clang++
         fi
         sudo rm -fr /usr/local/opt/libxml2/lib/*.dylib /usr/local/opt/libssh2/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/c-ares/lib/*.dylib /usr/local/opt/gettext/lib/*.dylib /usr/local/opt/sqlite/lib/*.dylib /usr/local/opt/zlib/lib/*.dylib /usr/local/opt/libuv/lib/*.dylib || true
-        ./configure --prefix=/usr/local --without-appletls --without-gnutls --with-openssl --with-libuv --with-libssh2 --with-sqlite3 --with-ca-bundle='/usr/local/etc/openssl/cert.pem' ARIA2_STATIC=yes --enable-shared=no
+        ./configure --prefix=/usr/local --without-appletls --disable-tests --without-gnutls --with-openssl --with-libuv --with-libssh2 --with-sqlite3 --with-ca-bundle='/usr/local/etc/openssl/cert.pem' ARIA2_STATIC=yes --enable-shared=no
         make -j$(sysctl -n machdep.cpu.thread_count)
         strip src/aria2c
         upx src/aria2c
