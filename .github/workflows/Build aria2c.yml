@@ -3,13 +3,12 @@ name: Build aria2c
 on:
   push:
 
-
 jobs:
   build:
     runs-on: macos-latest
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [amd64]
         os: [11, 12, 13]
 
     steps:
@@ -23,44 +22,45 @@ jobs:
         git submodule update --init
 
     - name: macOS Build
-      if: runner.os == 'macOS'
+      if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
       run: |
-        brew install cppunit gettext openssl libssh2 sqlite3 autoconf automake pkg-config libtool libuv libxml2 zlib upx
+        brew install cppunit gettext openssl libssh2 c-ares sqlite3 \
+        autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
         (cd ..;
         curl -L https://c-ares.haxx.se/download/c-ares-1.19.1.tar.gz -o c-ares.tar.gz;
         tar xf c-ares.tar.gz;
         cd c-ares-*;
         ./configure --disable-shared;
-        make -j$(sysctl -n machdep.cpu.thread_count);
-        make install -j$(sysctl -n machdep.cpu.thread_count);)
-        cd aria2
+        make -j`sysctl -n machdep.cpu.thread_count`;
+        make install -j`sysctl -n machdep.cpu.thread_count`;)
         git checkout build
-        autoreconf -i
-        export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib"
-        export CPPFLAGS="-I/usr/local/opt/libxml2/include -I/usr/local/opt/zlib/include -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/sqlite3/include -I/usr/local/include -I/usr/local/opt/libuv/include"
-        export PKG_CONFIG_PATH="/usr/local/opt/sqlite3/lib/pkgconfig:/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/opt/libuv/lib/pkgconfig"
-        if [ "${{ matrix.arch }}" == "amd64" ]; then
-          export CC=clang
-          export CXX=clang++
-        else
-          export CC=arm64-apple-darwin20.2-clang
-          export CXX=arm64-apple-darwin20.2-clang++
-        fi
-        sudo rm -fr /usr/local/opt/libxml2/lib/*.dylib /usr/local/opt/libssh2/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/c-ares/lib/*.dylib /usr/local/opt/gettext/lib/*.dylib /usr/local/opt/sqlite/lib/*.dylib /usr/local/opt/zlib/lib/*.dylib /usr/local/opt/libuv/lib/*.dylib || true
-        ./configure --prefix=/usr/local --without-appletls --disable-tests --without-gnutls --with-openssl --with-libuv --with-libssh2 --with-sqlite3 --with-ca-bundle='/usr/local/etc/openssl/cert.pem' ARIA2_STATIC=yes --enable-shared=no
-        make -j$(sysctl -n machdep.cpu.thread_count)
+        autoreconf -i;
+        export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib";
+        export CPPFLAGS="-I/usr/local/opt/libxml2/include -I/usr/local/opt/zlib/include -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/sqlite3/include -I/usr/local/include -I/usr/local/opt/libuv/include";
+        export PKG_CONFIG_PATH="/usr/local/opt/sqlite3/lib/pkgconfig:/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/opt/libuv/lib/pkgconfig";
+        export CC=clang
+        export CXX=clang++
+        sudo rm -fr /usr/local/opt/libxml2/lib/*.dylib /usr/local/opt/libssh2/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib \
+        /usr/local/opt/c-ares/lib/*.dylib /usr/local/opt/gettext/lib/*.dylib /usr/local/opt/sqlite/lib/*.dylib /usr/local/opt/zlib/lib/*.dylib /usr/local/opt/libuv/lib/*.dylib || true;
+        ./configure \
+        --prefix=/usr/local \
+        --without-appletls \
+        --without-gnutls \
+        --with-openssl \
+        --with-libuv \
+        --with-libssh2 \
+        --with-sqlite3 \
+        --with-ca-bundle='/usr/local/etc/openssl/cert.pem' \
+        ARIA2_STATIC=yes \
+        --enable-shared=no
+        make -j`sysctl -n machdep.cpu.thread_count`
         strip src/aria2c
-        upx src/aria2c
         mkdir ./artifact/
         mv src/aria2c ./aria2c
-        tar cf ./artifact/aria2c-macos-${{ matrix.arch }}.tar aria2c
-
-    - name: Upload to GitHub Releases
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        tar cf ./artifact/aria2c-macos-${{ matrix.arch }}-${{ matrix.os }}.tar aria2c
+    - name: upload macOS aria2c
+      if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
+      uses: actions/upload-artifact@master
       with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./artifact/aria2c-macos-${{ matrix.arch }}.tar
-        asset_name: aria2c-macos-${{ matrix.arch }}.tar
-        asset_content_type: application/octet-stream
+        name: aria2c-macos-${{ matrix.arch }}
+        path: ./artifact/
