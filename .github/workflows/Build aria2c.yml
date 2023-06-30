@@ -2,8 +2,7 @@ name: Build aria2c
 
 on:
   push:
-    tags:
-      - 'v*'
+
 
 jobs:
   build:
