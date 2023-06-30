@@ -63,9 +63,9 @@ jobs:
     - name: Set executable permissions & strip
       run: |     
         ARIA2C_PATH=$(which aria2c)
-        strip $(which aria2c)
         mkdir ./artifact/
         cp $(which aria2c) ./artifact/aria2c
+        strip ./artifact/aria2c
 
     - name: upload macOS aria2c
       if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
