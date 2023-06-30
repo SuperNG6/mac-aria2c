@@ -27,7 +27,7 @@ jobs:
         brew install cppunit gettext openssl libssh2 c-ares sqlite3 \
         autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
         (cd ..;
-        curl -L https://c-ares.haxx.se/download/c-ares-1.19.1.tar.gz -o c-ares.tar.gz;
+        curl -L https://c-ares.haxx.se/download/c-ares-1.17.2.tar.gz -o c-ares.tar.gz;
         tar xf c-ares.tar.gz;
         cd c-ares-*;
         ./configure --disable-shared;
