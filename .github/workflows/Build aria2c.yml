@@ -74,6 +74,7 @@ jobs:
 
     - name: Set executable permissions & strip
       run: |     
+        ls -lsh src/
         chmod a+x src/aria2c
         strip src/aria2c
         mkdir ./artifact/
