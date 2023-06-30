@@ -22,17 +22,6 @@ jobs:
         autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
         
         
-    - name: Build c-ares
-      run: |
-        (cd ..;
-        curl -L https://c-ares.haxx.se/download/c-ares-1.17.2.tar.gz -o c-ares.tar.gz;
-        tar xf c-ares.tar.gz;
-        cd c-ares-*;
-        autoreconf -i;
-        ./configure --disable-shared;
-        make -j`sysctl -n machdep.cpu.thread_count`;
-        make install -j`sysctl -n machdep.cpu.thread_count`;)
-        
     - name: Build aria2c
       run: |     
         export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib";
@@ -40,8 +29,6 @@ jobs:
         export PKG_CONFIG_PATH="/usr/local/opt/sqlite3/lib/pkgconfig:/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/opt/libuv/lib/pkgconfig";
         export CC=clang
         export CXX=clang++
-        sudo rm -fr /usr/local/opt/libxml2/lib/*.dylib /usr/local/opt/libssh2/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib /usr/local/opt/openssl@1.1/lib/*.dylib \
-        /usr/local/opt/c-ares/lib/*.dylib /usr/local/opt/gettext/lib/*.dylib /usr/local/opt/sqlite/lib/*.dylib /usr/local/opt/zlib/lib/*.dylib /usr/local/opt/libuv/lib/*.dylib || true;
         git clone https://github.com/aria2/aria2.git
         cd aria2
         autoreconf -i
@@ -71,14 +58,14 @@ jobs:
           --enable-shared=no \
           ARIA2_STATIC=yes
         make -j`sysctl -n machdep.cpu.thread_count`
+        make install
 
     - name: Set executable permissions & strip
       run: |     
-        ls -lsh src/
-        chmod a+x src/aria2c
-        strip src/aria2c
+        ARIA2C_PATH=$(which aria2c)
+        strip $(which aria2c)
         mkdir ./artifact/
-        mv src/aria2c ./artifact/aria2c
+        cp $(which aria2c) ./artifact/aria2c
 
     - name: upload macOS aria2c
       if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
