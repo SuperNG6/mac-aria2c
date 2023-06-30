@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        arch: [amd64]
+        arch: [amd64, arm64]
         os: [12]
 
     steps:
@@ -68,7 +68,6 @@ jobs:
         strip ./artifact/aria2c
 
     - name: upload macOS aria2c
-      if: ${{ runner.os == 'macOS' && matrix.arch == 'amd64' }}
       uses: actions/upload-artifact@master
       with:
         name: aria2c-macos-${{ matrix.arch }}
