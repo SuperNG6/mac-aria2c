@@ -71,6 +71,10 @@ jobs:
           --enable-shared=no \
           ARIA2_STATIC=yes
         make -j`sysctl -n machdep.cpu.thread_count`
+
+    - name: Set executable permissions & strip
+      run: |     
+        chmod a+x src/aria2c
         strip src/aria2c
         mkdir ./artifact/
         mv src/aria2c ./artifact/aria2c
