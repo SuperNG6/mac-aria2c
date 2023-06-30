@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         arch: [amd64]
-        os: [11, 12, 13]
+        os: [12]
 
     steps:
     - name: Checkout code
@@ -33,7 +33,6 @@ jobs:
         ./configure --disable-shared;
         make -j`sysctl -n machdep.cpu.thread_count`;
         make install -j`sysctl -n machdep.cpu.thread_count`;)
-        git checkout build
         autoreconf -i;
         export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib";
         export CPPFLAGS="-I/usr/local/opt/libxml2/include -I/usr/local/opt/zlib/include -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/sqlite3/include -I/usr/local/include -I/usr/local/opt/libuv/include";
