@@ -7,34 +7,35 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [macos-11.0, macos-12.0, macos-13.0, macos-latest]
-        platform: [x86_64, arm64]
+        arch: [x86_64, arm64]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up macOS
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-
       - name: Install dependencies
         run: |
           brew install cppunit gettext openssl libssh2 c-ares sqlite3 \
           autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
-          
+          pip install sphinx docutils
+
       - name: Build aria2c
         run: |
           export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib";
           export CPPFLAGS="-I/usr/local/opt/libxml2/include -I/usr/local/opt/zlib/include -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/sqlite3/include -I/usr/local/include -I/usr/local/opt/libuv/include";
           export PKG_CONFIG_PATH="/usr/local/opt/sqlite3/lib/pkgconfig:/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/opt/libuv/lib/pkgconfig";
-          export CC=clang
-          export CXX=clang++          
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            export CC="clang -arch arm64"
+            export CXX="clang++ -arch arm64"
+          else
+            export CC=clang
+            export CXX=clang++
+          fi
           git clone https://github.com/aria2/aria2.git
           cd aria2
           autoreconf -i
@@ -63,17 +64,45 @@ jobs:
             --disable-nls \
             ARIA2_STATIC=yes
           make
-
-      - name: Archive artifacts
-        run: |
-          mkdir -p artifacts/${{ matrix.os }}/$platform
-          chmod a+x aria2/aria2c
-          strip aria2/aria2c
-          cp aria2/aria2c artifacts/${{ matrix.os }}/$platform/
-        working-directory: .
+          mkdir -p artifacts/${{ matrix.os }}/${{ matrix.arch }}
+          chmod a+x src/aria2c
+          strip src/aria2c
+          cp src/aria2c artifacts/${{ matrix.os }}/${{ matrix.arch }}/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: aria2c
-          path: artifacts
+          name: aria2c-${{ matrix.os }}-${{ matrix.arch }}
+          path: artifacts/${{ matrix.os }}/${{ matrix.arch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          tag_name: ${{ format('aria2c-{0}', github.sha) }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts
+          asset_name: aria2c-${{ matrix.os }}-${{ matrix.arch }}
+          asset_content_type: application/octet-stream
