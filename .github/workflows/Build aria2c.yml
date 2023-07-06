@@ -18,20 +18,22 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew install cppunit gettext openssl libssh2 c-ares sqlite3 \
+        brew install expat cppunit gettext openssl libssh2 c-ares sqlite3 \
         autoconf automake pkg-config libtool libuv libxml2 zlib upx libuv
+        brew link expat
         
         
     - name: Build aria2c
-      run: |     
-        export LDFLAGS="-L/usr/local/opt/libxml2/lib -L/usr/local/opt/zlib/lib -L/usr/local/opt/openssl@1.1/lib -L/usr/local/opt/sqlite3/lib -L/usr/local/lib -L/usr/local/opt/libuv/lib";
-        export CPPFLAGS="-I/usr/local/opt/libxml2/include -I/usr/local/opt/zlib/include -I/usr/local/opt/openssl@1.1/include -I/usr/local/opt/sqlite3/include -I/usr/local/include -I/usr/local/opt/libuv/include";
-        export PKG_CONFIG_PATH="/usr/local/opt/sqlite3/lib/pkgconfig:/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/zlib/lib/pkgconfig:/usr/local/opt/openssl@1.1/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/opt/libuv/lib/pkgconfig";
-        export CC=clang
-        export CXX=clang++
+      run: |  
+        # expat
+        export LIBEXPAT_LIBS="-L/usr/local/opt/expat/lib"
+        export LIBEXPAT_CFLAGS="-I/usr/local/opt/expat/include"   
+        export LDFLAGS="-L/usr/local/lib"
+        export CPPFLAGS="-I/usr/local/include"
         git clone https://github.com/aria2/aria2.git
         cd aria2
         autoreconf -i
+        ./configure -h
         ./configure \
           --enable-static \
           --with-openssl=/usr/local/opt/openssl \
